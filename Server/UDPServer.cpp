@@ -27,15 +27,12 @@ void UDPServer::StartComunicate()
 			exit(1);
 		}
 		
-		// Get book from database
 		std::string clean_string = std::string(client_message);
 		auto db_res = DBRequestBook(clean_string);
 		
-		// Database data to JSON string
 		std::string server_response_json;
 		CJsonSerializer::Serialize(db_res.get(), server_response_json);
 		
-		// Send book responese or default object { name: "Not found"... } 
 		if (sendto(server_socket, server_response_json.c_str(), (int)strlen(server_response_json.c_str()), 0, (SOCKADDR*)&client, slen) == SOCKET_ERROR)
 		{
 			std::cout << "sendto() failed with error code: " << WSAGetLastError();
@@ -150,26 +147,6 @@ void UDPServer::BindSocket(u_short port)
 	else 
 	{
 		std::cout << "Binding socket to server info is OK" << '\n';
-	}
-}
-
-void UDPServer::send(SOCKET &s, char* buf, SOCKADDR* client, int slen, int len, int flags)
-{
-	if (recvfrom(s, (char*) &buf, len, flags, (SOCKADDR*)&client, &slen) == SOCKET_ERROR)
-	{
-		std::cout << "recvfrom() failed with error code: " << WSAGetLastError() << '\n';
-		Shutdown();
-		exit(1);
-	}
-}
-
-void UDPServer::receive(SOCKET &s, char* buf, int len, SOCKADDR* to, int tolen, int flags)
-{
-	if (sendto(s, buf, len, flags, to, tolen) == SOCKET_ERROR)
-	{
-		std::cout << "sendto() failed with error code: " << WSAGetLastError();
-		Shutdown();
-		exit(1);
 	}
 }
 
