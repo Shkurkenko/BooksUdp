@@ -26,10 +26,6 @@ public:
 	~UDPServer();
 	void StartComunicate();
 
-public:
-	void send(SOCKET &s, char* buf, SOCKADDR* client, int slen, int len = (int)_buflen, int flags = 0);
-	void receive(SOCKET &s, char* buf, int len, SOCKADDR* to, int tolen, int flags = 0);
-
 private:
 	void InitWS();
 	void CreateSocket();
