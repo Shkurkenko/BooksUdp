@@ -1,5 +1,7 @@
 #pragma once
+
 #include "Config.h"
+#include "Decoder.h"
 
 enum class MessageType {
     JSON,
@@ -14,24 +16,43 @@ public:
     Message(MessageType type) : _type(type) {}
 
 public:
-    std::string toBinary() {
-        std::string binary_string;
-        char zero = '0';
-        char one = '1';
-        if(buffer[0] == '\0') throw std::invalid_argument("Message buffer is empty!");
-        for(auto &c: buffer) {
-            for(int i = 7; i >= 0; --i) {
-                (c & 1 << i) ? binary_string += zero : binary_string += one;
-            }
-        }
-        return binary_string;
+    void decode() {
+        Decoder::decode(buffer);
     }
-    
-    std::string toString() {
-        return std::string(buffer);
+
+    void encode() {
+        auto encoded = Decoder::multiplyString(buffer);
+        this->clear();
+        this->setMessage(encoded);
     }
 
     void clear() {
         memset(buffer, 0, sizeof(buffer));
+    }
+
+    void setMessage(std::string &message) {
+        this->clear();
+        if(message.size() <= CONFIG::BUFLEN_DEFAULT) {
+            this->setMessage(message);
+        }
+        else {
+            std::cout << "Message is too long..." << "\n";
+        }
+    }
+
+    void setMessage(char* message) {
+        this->clear();
+        if(strlen(message) <= CONFIG::BUFLEN_DEFAULT) {
+            for(size_t i = 0; i != strlen(message); ++i) {
+                buffer[i] = message[i];
+            }
+        } 
+        else {
+            std:cout << "Message if too long..." << '\n';
+        }
+    }
+
+    inline void setType(MessageType type) {
+        _type = type;
     }
 };
