@@ -15,7 +15,7 @@ UDPServer::~UDPServer()
 
 void UDPServer::StartComunicate()
 {
-	Message message(MessageType::JSON);
+	Message message(MessageType::TEXT);
 	int slen = sizeof(SOCKADDR_IN);
 	
 	while (true) 
@@ -26,14 +26,19 @@ void UDPServer::StartComunicate()
 			Shutdown();
 			exit(1);
 		}
-		
+
+		message.decode();	
 		auto clean_string = message.toString();
 		auto db_res = DBRequestBook(clean_string);
 		
 		std::string server_response_json;
 		CJsonSerializer::Serialize(db_res.get(), server_response_json);
-		
-		if (sendto(server_socket, server_response_json.c_str(), (int)strlen(server_response_json.c_str()), 0, (SOCKADDR*)&client, slen) == SOCKET_ERROR)
+
+		message.setMessage(server_response_json);
+		message.setType(MessageType::JSON);
+		message.encode();
+
+		if (sendto(server_socket, message.buffer , (int)strlen(message.buffer), 0, (SOCKADDR*)&client, slen) == SOCKET_ERROR)
 		{
 			std::cout << "sendto() failed with error code: " << WSAGetLastError();
 			Shutdown();
