@@ -1,4 +1,5 @@
 #include "udpclient.h"
+#include "decoder.h"
 
 UDPClient::UDPClient(QObject *parent)
     : QObject{parent}
@@ -10,7 +11,8 @@ UDPClient::UDPClient(QObject *parent)
 
 void UDPClient::SendBookName(const QByteArray name)
 {
-    socket->writeDatagram(name, QHostAddress::LocalHost, 8888);
+    auto encoded_name = Decoder::encode(name)
+    socket->writeDatagram(encoded_name, QHostAddress::LocalHost, 8888);
 }
 
 void UDPClient::ReadDatagram()
@@ -23,8 +25,9 @@ void UDPClient::ReadDatagram()
     socket->readDatagram(Data.data(), Data.size(), &sender, &senderPort);
 
     QString DataAsString = QString(Data);
-    qDebug() << DataAsString;
-    QJsonObject DataObj = ObjectFromString(DataAsString);
+    QString decoded = Decoder::decode(DataAsString);
+    qDebug() << decoded;
+    QJsonObject DataObj = ObjectFromString(decoded);
 
     emit(DataRecieved(DataObj));
 }

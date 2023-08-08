@@ -16,26 +16,31 @@
 
 #include <pqxx/pqxx>
 
+#include "Message.h"
 #include "Serialize.h"
 #include "Book.h"
 
 
 class UDPServer {
 public:
-	UDPServer(PCSTR address, u_short port);
+	UDPServer(std::string address, u_short port);
 	~UDPServer();
 	void StartComunicate();
+
+public:
+	void send(SOCKET &s, char* buf, SOCKADDR* client, int slen, int len = (int)_buflen, int flags = 0);
+	void receive(SOCKET &s, char* buf, int len, SOCKADDR* to, int tolen, int flags = 0);
 
 private:
 	void InitWS();
 	void CreateSocket();
 	void BindSocket(u_short port);
-	void ConvertIP(PCSTR &address);
+	void ConvertIP(std::string &address);
 	void Shutdown();
 	std::shared_ptr<Book> DBRequestBook(std::string& name);
 private:
 	static const size_t _buflen = 1024;
-	PCSTR _address;
+	std::string _address;
 	u_short _port;
 	IN_ADDR ip_to_num;
 	WSADATA wsaData;

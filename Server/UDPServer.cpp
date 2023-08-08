@@ -1,6 +1,6 @@
 #include "UDPServer.h"
 
-UDPServer::UDPServer(PCSTR address, u_short port) : _address(address), _port(port)
+UDPServer::UDPServer(std::string address, u_short port) : _address(address), _port(port)
 {
 	InitWS();
 	CreateSocket();
@@ -15,19 +15,19 @@ UDPServer::~UDPServer()
 
 void UDPServer::StartComunicate()
 {
-	char client_message[1024];
+	Message message(MessageType::JSON);
 	int slen = sizeof(SOCKADDR_IN);
 	
 	while (true) 
 	{
-		if (recvfrom(server_socket, (char*)&client_message, _buflen, 0, (SOCKADDR*)&client, &slen) == SOCKET_ERROR)
+		if (recvfrom(server_socket, (char*)&message.buffer, _buflen, 0, (SOCKADDR*)&client, &slen) == SOCKET_ERROR)
 		{
 			std::cout << "recvfrom() failed with error code: " << WSAGetLastError() << '\n';
 			Shutdown();
 			exit(1);
 		}
 		
-		std::string clean_string = std::string(client_message);
+		auto clean_string = message.toString();
 		auto db_res = DBRequestBook(clean_string);
 		
 		std::string server_response_json;
@@ -41,7 +41,7 @@ void UDPServer::StartComunicate()
 		}
 
 		clean_string.clear();
-		memset(client_message, 0, sizeof(client_message));
+		message.clear();
 	}
 }
 
@@ -150,10 +150,30 @@ void UDPServer::BindSocket(u_short port)
 	}
 }
 
-void UDPServer::ConvertIP(PCSTR &address)
+void UDPServer::send(SOCKET &s, char* buf, SOCKADDR* client, int slen, int len, int flags)
+{
+	if (recvfrom(s, (char*) &buf, len, flags, (SOCKADDR*)&client, &slen) == SOCKET_ERROR)
+	{
+		std::cout << "recvfrom() failed with error code: " << WSAGetLastError() << '\n';
+		Shutdown();
+		exit(1);
+	}
+}
+
+void UDPServer::receive(SOCKET &s, char* buf, int len, SOCKADDR* to, int tolen, int flags)
+{
+	if (sendto(s, buf, len, flags, to, tolen) == SOCKET_ERROR)
+	{
+		std::cout << "sendto() failed with error code: " << WSAGetLastError();
+		Shutdown();
+		exit(1);
+	}
+}
+
+void UDPServer::ConvertIP(std::string &address)
 {
 	int result;
-	result = inet_pton(AF_INET, address, &ip_to_num);
+	result = inet_pton(AF_INET, address.c_str(), &ip_to_num);
 	if (result <= 0) {
 		std::cout << "Error in IP translation to special numeric format" << '\n';
 		exit(1);
